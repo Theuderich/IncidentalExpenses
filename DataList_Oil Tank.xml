@@ -1,0 +1,22 @@
+<list>
+  <entry>
+    <timestamp>2015-04-30 22:00:00.0 UTC</timestamp>
+    <value>50.0</value>
+  </entry>
+  <entry>
+    <timestamp>2015-06-20 11:43:00.0 UTC</timestamp>
+    <value>42.0</value>
+  </entry>
+  <entry>
+    <timestamp>2015-10-15 10:16:00.0 UTC</timestamp>
+    <value>32.3</value>
+  </entry>
+  <entry>
+    <timestamp>2015-10-15 10:20:00.0 UTC</timestamp>
+    <value>80.0</value>
+  </entry>
+  <entry>
+    <timestamp>2015-11-27 09:56:00.0 UTC</timestamp>
+    <value>69.0</value>
+  </entry>
+</list>
