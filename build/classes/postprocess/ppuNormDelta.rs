@@ -1,2 +1,0 @@
-postprocess.ppuNormDelta
-postprocess.NormDelta

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package nekore;
+package main;
 
 import consumption.DataListCounters;
 import consumption.DataModelCounter;
@@ -22,7 +22,7 @@ import postprocess.ppuNormDelta;
  *
  * @author mabarthe
  */
-public class NeKoRe {
+public class IncidentalExpenses {
 
     /**
      * @param args the command line arguments

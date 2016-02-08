@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import nekore.MyDate;
+import main.MyDate;
 
 /**
  *
