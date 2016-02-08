@@ -39,6 +39,7 @@ public class IncidentalExpenses {
     private static Option   oTypeWater = new Option("w", "water", true, "Takes the counter value of type water (m^3).");
     private static Option   oTypeOil = new Option("o", "oil", true, "Takes the counter value of type oil (cm).");
     private static Option   oStats = new Option( "s", "statistics", false, "Prints a table with statistcs." );
+    private static Option   oPrintList = new Option("p", "printlist", true, "Prints the given list.");
     
     private static CommandLineParser parser;
     private static CommandLine cmd;        
@@ -64,19 +65,20 @@ public class IncidentalExpenses {
         options.addOption(oTypeWater);
         options.addOption(oTypeOil);
         options.addOption(oStats);
+        options.addOption(oPrintList);
         
         parser = new DefaultParser();
         cmd = parser.parse( options, args);
 
+        // instantiate singletons
         ppuModel ppu = ppuModel.getInst();
-        
         DataModelCounter dbCounter = DataModelCounter.getInstance();
         DataModelEnvironment dbEnv = DataModelEnvironment.getInstance();
         
+        // restore counter lists from file
         dbCounter.loadFromFile();
         dbEnv.loadFromFile();
-
-dbCounter.dataHasChanged();
+        dbCounter.dataHasChanged();
         
         if( cmd != null )
         {
@@ -107,13 +109,14 @@ dbCounter.dataHasChanged();
             String      time;
             time=cmd.getOptionValue( oTimestamp.getOpt() );
             ticks = format.parse(time).getTime();
+            System.out.println(String.format("Text: %s\nTick: %d\n", time, ticks));
         }
 
         if( cmd.hasOption( oTypeElectricity.getOpt() ) && cmd.hasOption( oTimestamp.getOpt() ) )
         {
             DataListCounters list;
             list = dbCounter.getConsList(DataType.ELECTRICITY);
-            double counter = Double.parseDouble( cmd.getOptionValue( oTimestamp.getOpt() ) );
+            double counter = Double.parseDouble( cmd.getOptionValue( oTypeElectricity.getOpt() ) );
             list.add( new ListEntry( ticks, counter));
             
             dataFound = true;
@@ -147,7 +150,13 @@ dbCounter.dataHasChanged();
             dbCounter.saveToFile();
         }
 
-
+        if( cmd.hasOption( oPrintList.getOpt() ))
+        {
+            DataListCounters list;
+            list = dbCounter.getConsList(DataType.OIL_TANK);
+            list.printConsole();
+        }
+        
         if( cmd.hasOption( oStats.getOpt() ))
         {
             DataListCounters list;
