@@ -15,6 +15,12 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import postprocess.ppuModel;
 import postprocess.ppuNormDelta;
 
@@ -24,12 +30,44 @@ import postprocess.ppuNormDelta;
  */
 public class IncidentalExpenses {
 
+    private static Options  options = new Options();
+    private static Option   oHelp = new Option( "h", "help", false, "print this message." );
+    private static Option   oTimeformat = new Option("f", "datetimeformat", true, "Changes the expected date time format pattern (dd.MM.yyyy HH:mm:ss).");
+    private static Option   oTimestamp = new Option("t", "timestamp", true, "Takes the time stamp of the counter reading in the format of -datetimeformat.");
+    private static Option   oTypeElectricity = new Option("e", "electricity", true, "Takes the counter value of type electricity (kW/h).");
+    private static Option   oTypeGas = new Option("g", "gas", true, "Takes the counter value of type gas (m^3).");
+    private static Option   oTypeWater = new Option("w", "water", true, "Takes the counter value of type water (m^3).");
+    private static Option   oTypeOil = new Option("o", "oil", true, "Takes the counter value of type oil (cm).");
+    private static Option   oStats = new Option( "s", "statistics", false, "Prints a table with statistcs." );
+    
+    private static CommandLineParser parser;
+    private static CommandLine cmd;        
+    
+    private static String   dateFormat = "dd.MM.yyyy HH:mm:ss";
+    
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws ParseException {
+    public static void main(String[] args) throws ParseException, org.apache.commons.cli.ParseException {
         // TODO code application logic here
         
+        boolean     printHelp = false;
+        
+        long        ticks = 0;
+        boolean     dataFound = false;
+        
+        options.addOption(oHelp);
+        options.addOption(oTimeformat);
+        options.addOption(oTimestamp);
+        options.addOption(oTypeElectricity);
+//        options.addOption(oTypeGas);
+        options.addOption(oTypeWater);
+        options.addOption(oTypeOil);
+        options.addOption(oStats);
+        
+        parser = new DefaultParser();
+        cmd = parser.parse( options, args);
+
         ppuModel ppu = ppuModel.getInst();
         
         DataModelCounter dbCounter = DataModelCounter.getInstance();
@@ -38,105 +76,152 @@ public class IncidentalExpenses {
         dbCounter.loadFromFile();
         dbEnv.loadFromFile();
 
-        dbCounter.dataHasChanged();
+dbCounter.dataHasChanged();
         
-        DateFormat format = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.GERMAN);
+        if( cmd != null )
+        {
+            if(args.length == 0)
+                printHelp = true;
 
-        String datum = "15.10.2015 12:20:00";
-        DataListCounters list;
-        
-        list = dbCounter.getConsList(DataType.OIL_TANK);
-        list.add( new ListEntry( format.parse(datum).getTime(), 80));
+            if( cmd.hasOption( oHelp.getOpt() ))
+                printHelp = true;
+        }
 
-//        list = dbCounter.getConsList(DataType.ELECTRICITY);
-//        list.add( new ListEntry( format.parse(datum).getTime(), 79642.6));
-//        list.add( new ListEntry( format.parse("18.06.2015 07:15:00").getTime(), 77420.4));
-//        list.add( new ListEntry( format.parse("19.06.2015 08:51:00").getTime(), 77431.7));
-//        
-//        list = dbCounter.getConsList(DataType.WATER_ALL);
-//        list.add( new ListEntry( format.parse(datum).getTime(), 1014.400));
-//        ^
-//        list = dbCounter.getConsList(DataType.WATER_GARDEN);
-//        list.add( new ListEntry( format.parse(datum).getTime(), 115.556));
+        if(printHelp)
+        {
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.setWidth(1000);
+            formatter.printHelp( "IncidentalExpenses", options );
+            System.exit(-1);
+        }
         
-        dbCounter.saveToFile();
+        if( cmd.hasOption( oTimeformat.getOpt() ))
+        {
+            dateFormat=cmd.getOptionValue( oTimeformat.getOpt() );
+        }
         
-//        dbEnv.getConsList(DataType.TEMPERATURE).loadArchiveData( format.parse("17.06.2015 00:00:00"), format.parse("17.06.2015 00:00:00"));
-//        dbEnv.saveToFile();
+        DateFormat format = new SimpleDateFormat(dateFormat, Locale.GERMAN);
         
-        dbCounter.printConsole();
-        dbEnv.printConsole();
-        
-        ppu.setCounterType(DataType.ELECTRICITY);
-        dbCounter.dataHasChanged();
-        ppuNormDelta.getInst().printConsole();
-        
-        double  infraMonatlich = 0;
-        double  preisProEinheit = 0.26;
-        double  grundPreis = 89.61;
-        String  f = "%-20s %10s %-10s";
-        DecimalFormat df = new DecimalFormat("##0.000");
+        if( cmd.hasOption( oTimestamp.getOpt() ))
+        {
+            String      time;
+            time=cmd.getOptionValue( oTimestamp.getOpt() );
+            ticks = format.parse(time).getTime();
+        }
 
-        list = dbCounter.getConsList(DataType.ELECTRICITY);
-        System.out.println( String.format(f, "Total Average:", df.format(list.getTotalAverage()), "kW/d"));
-        System.out.println( String.format(f, "Year Consumption", df.format(list.getTotalAverage()*365), "kW/y"));
-        System.out.println( String.format(f, "Arbeitspreis:", df.format(list.getTotalAverage()*365*preisProEinheit), "€"));
-        System.out.println( String.format(f, "Grundpreis:", df.format(grundPreis), "€"));
-        System.out.println( String.format(f, "Gesamt:", df.format(list.getTotalAverage()*365*preisProEinheit+grundPreis), "€"));
-        System.out.println( String.format(f, "Monatlich:", df.format((list.getTotalAverage()*365*preisProEinheit+grundPreis)/12), "€"));
-        infraMonatlich += (list.getTotalAverage()*365*preisProEinheit+grundPreis)/12;
-        System.out.println( );
+        if( cmd.hasOption( oTypeElectricity.getOpt() ) && cmd.hasOption( oTimestamp.getOpt() ) )
+        {
+            DataListCounters list;
+            list = dbCounter.getConsList(DataType.ELECTRICITY);
+            double counter = Double.parseDouble( cmd.getOptionValue( oTimestamp.getOpt() ) );
+            list.add( new ListEntry( ticks, counter));
+            
+            dataFound = true;
+            list.printConsole();
+        }
         
+        if( cmd.hasOption( oTypeWater.getOpt() ) && cmd.hasOption( oTimestamp.getOpt() ) )
+        {
+            DataListCounters list;
+            list = dbCounter.getConsList(DataType.WATER_ALL);
+            double counter = Double.parseDouble( cmd.getOptionValue( oTypeWater.getOpt() ) );
+            list.add( new ListEntry( ticks, counter));
+            
+            dataFound = true;
+            list.printConsole();
+        }
+        
+        if( cmd.hasOption( oTypeOil.getOpt() ) && cmd.hasOption( oTimestamp.getOpt() ) )
+        {
+            DataListCounters list;
+            list = dbCounter.getConsList(DataType.OIL_TANK);
+            double counter = Double.parseDouble( cmd.getOptionValue( oTypeOil.getOpt() ) );
+            list.add( new ListEntry( ticks, counter));
+            
+            dataFound = true;
+            list.printConsole();
+        }
+        
+        if( dataFound )
+        {
+            dbCounter.saveToFile();
+        }
 
-        
 
-        ppu.setCounterType(DataType.WATER_ALL);
-        dbCounter.dataHasChanged();
-        ppuNormDelta.getInst().printConsole();
-        list = dbCounter.getConsList(DataType.WATER_ALL);
-        
-        preisProEinheit = 2.27;
-        grundPreis = 98.35;
-        System.out.println( String.format(f, "Total Average:", df.format(list.getTotalAverage()), "m3/d"));
-        System.out.println( String.format(f, "Year Consumption", df.format(list.getTotalAverage()*365), "m3/y"));
-        System.out.println( String.format(f, "Arbeitspreis:", df.format(list.getTotalAverage()*365*preisProEinheit), "€"));
-        System.out.println( String.format(f, "Grundpreis:", df.format(grundPreis), "€"));
-        System.out.println( String.format(f, "Gesamt:", df.format(list.getTotalAverage()*365*preisProEinheit+grundPreis), "€"));
-        System.out.println( String.format(f, "Monatlich:", df.format((list.getTotalAverage()*365*preisProEinheit+grundPreis)/12), "€"));
-        infraMonatlich += (list.getTotalAverage()*365*preisProEinheit+grundPreis)/12;
-        System.out.println( );
-//        System.out.println( String.format("Average: %f m3/d", ppuNormDelta.getInst().getAverageValue()));
-//        System.out.println( String.format("Expected Year Consumption: %f m3/y", ppuNormDelta.getInst().getAverageValue()*365));
-//        System.out.println( String.format("Arbeitspreis: %f Euro", ppuNormDelta.getInst().getAverageValue()*365*preisProEinheit));
-//        System.out.println( String.format("Grundpreis: %f Euro", grundPreis));
-//        System.out.println( String.format("Gesamt: %f Euro", ppuNormDelta.getInst().getAverageValue()*365*preisProEinheit+grundPreis));
-//        System.out.println( String.format("Monatlich: %f Euro", (ppuNormDelta.getInst().getAverageValue()*365*preisProEinheit+grundPreis)/12));
+        if( cmd.hasOption( oStats.getOpt() ))
+        {
+            DataListCounters list;
+            
+            dbCounter.printConsole();
+            dbEnv.printConsole();
 
-        ppu.setCounterType(DataType.WATER_GARDEN);
-        dbCounter.dataHasChanged();
-        ppuNormDelta.getInst().printConsole();
-        list = dbCounter.getConsList(DataType.WATER_GARDEN);
-        
-        preisProEinheit = -1.80;
-        grundPreis = 0;
-        System.out.println( String.format(f, "Total Average:", df.format(list.getTotalAverage()), "m3/d"));
-        System.out.println( String.format(f, "Year Consumption", df.format(list.getTotalAverage()*365), "m3/y"));
-        System.out.println( String.format(f, "Arbeitspreis:", df.format(list.getTotalAverage()*365*preisProEinheit), "€"));
-        System.out.println( String.format(f, "Grundpreis:", df.format(grundPreis), "€"));
-        System.out.println( String.format(f, "Gesamt:", df.format(list.getTotalAverage()*365*preisProEinheit+grundPreis), "€"));
-        System.out.println( String.format(f, "Monatlich:", df.format((list.getTotalAverage()*365*preisProEinheit+grundPreis)/12), "€"));
-        infraMonatlich += (list.getTotalAverage()*365*preisProEinheit+grundPreis)/12;
-        System.out.println( );
-        
-        
-        System.out.println( );
-        System.out.println( String.format(f, "Infra Fürth:", df.format(infraMonatlich), "€"));
-        System.out.println( );
-        System.out.println( );
-        
-        
-        
-        
+            ppu.setCounterType(DataType.ELECTRICITY);
+            dbCounter.dataHasChanged();
+            ppuNormDelta.getInst().printConsole();
+
+            double  infraMonatlich = 0;
+            double  preisProEinheit = 0.26;
+            double  grundPreis = 89.61;
+            String  f = "%-20s %10s %-10s";
+            DecimalFormat df = new DecimalFormat("##0.000");
+
+            list = dbCounter.getConsList(DataType.ELECTRICITY);
+            System.out.println( String.format(f, "Total Average:", df.format(list.getTotalAverage()), "kW/d"));
+            System.out.println( String.format(f, "Year Consumption", df.format(list.getTotalAverage()*365), "kW/y"));
+            System.out.println( String.format(f, "Arbeitspreis:", df.format(list.getTotalAverage()*365*preisProEinheit), "€"));
+            System.out.println( String.format(f, "Grundpreis:", df.format(grundPreis), "€"));
+            System.out.println( String.format(f, "Gesamt:", df.format(list.getTotalAverage()*365*preisProEinheit+grundPreis), "€"));
+            System.out.println( String.format(f, "Monatlich:", df.format((list.getTotalAverage()*365*preisProEinheit+grundPreis)/12), "€"));
+            infraMonatlich += (list.getTotalAverage()*365*preisProEinheit+grundPreis)/12;
+            System.out.println( );
+
+
+
+
+            ppu.setCounterType(DataType.WATER_ALL);
+            dbCounter.dataHasChanged();
+            ppuNormDelta.getInst().printConsole();
+            list = dbCounter.getConsList(DataType.WATER_ALL);
+
+            preisProEinheit = 2.27;
+            grundPreis = 98.35;
+            System.out.println( String.format(f, "Total Average:", df.format(list.getTotalAverage()), "m3/d"));
+            System.out.println( String.format(f, "Year Consumption", df.format(list.getTotalAverage()*365), "m3/y"));
+            System.out.println( String.format(f, "Arbeitspreis:", df.format(list.getTotalAverage()*365*preisProEinheit), "€"));
+            System.out.println( String.format(f, "Grundpreis:", df.format(grundPreis), "€"));
+            System.out.println( String.format(f, "Gesamt:", df.format(list.getTotalAverage()*365*preisProEinheit+grundPreis), "€"));
+            System.out.println( String.format(f, "Monatlich:", df.format((list.getTotalAverage()*365*preisProEinheit+grundPreis)/12), "€"));
+            infraMonatlich += (list.getTotalAverage()*365*preisProEinheit+grundPreis)/12;
+            System.out.println( );
+    //        System.out.println( String.format("Average: %f m3/d", ppuNormDelta.getInst().getAverageValue()));
+    //        System.out.println( String.format("Expected Year Consumption: %f m3/y", ppuNormDelta.getInst().getAverageValue()*365));
+    //        System.out.println( String.format("Arbeitspreis: %f Euro", ppuNormDelta.getInst().getAverageValue()*365*preisProEinheit));
+    //        System.out.println( String.format("Grundpreis: %f Euro", grundPreis));
+    //        System.out.println( String.format("Gesamt: %f Euro", ppuNormDelta.getInst().getAverageValue()*365*preisProEinheit+grundPreis));
+    //        System.out.println( String.format("Monatlich: %f Euro", (ppuNormDelta.getInst().getAverageValue()*365*preisProEinheit+grundPreis)/12));
+
+            ppu.setCounterType(DataType.WATER_GARDEN);
+            dbCounter.dataHasChanged();
+            ppuNormDelta.getInst().printConsole();
+            list = dbCounter.getConsList(DataType.WATER_GARDEN);
+
+            preisProEinheit = -1.80;
+            grundPreis = 0;
+            System.out.println( String.format(f, "Total Average:", df.format(list.getTotalAverage()), "m3/d"));
+            System.out.println( String.format(f, "Year Consumption", df.format(list.getTotalAverage()*365), "m3/y"));
+            System.out.println( String.format(f, "Arbeitspreis:", df.format(list.getTotalAverage()*365*preisProEinheit), "€"));
+            System.out.println( String.format(f, "Grundpreis:", df.format(grundPreis), "€"));
+            System.out.println( String.format(f, "Gesamt:", df.format(list.getTotalAverage()*365*preisProEinheit+grundPreis), "€"));
+            System.out.println( String.format(f, "Monatlich:", df.format((list.getTotalAverage()*365*preisProEinheit+grundPreis)/12), "€"));
+            infraMonatlich += (list.getTotalAverage()*365*preisProEinheit+grundPreis)/12;
+            System.out.println( );
+
+
+            System.out.println( );
+            System.out.println( String.format(f, "Infra Fürth:", df.format(infraMonatlich), "€"));
+            System.out.println( );
+            System.out.println( );
+
+        }
     }
-    
 }
