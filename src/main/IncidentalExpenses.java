@@ -14,6 +14,7 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -33,13 +34,13 @@ public class IncidentalExpenses {
     private static Options  options = new Options();
     private static Option   oHelp = new Option( "h", "help", false, "print this message." );
     private static Option   oTimeformat = new Option("f", "datetimeformat", true, "Changes the expected date time format pattern (dd.MM.yyyy HH:mm:ss).");
-    private static Option   oTimestamp = new Option("t", "timestamp", true, "Takes the time stamp of the counter reading in the format of -datetimeformat.");
+    private static Option   oTimestamp = new Option("t", "timestamp", true, "Takes the time stamp of the counter reading in the format of -datetimeformat. If not given, use surrent time.");
     private static Option   oTypeElectricity = new Option("e", "electricity", true, "Takes the counter value of type electricity (kW/h).");
     private static Option   oTypeGas = new Option("g", "gas", true, "Takes the counter value of type gas (m^3).");
     private static Option   oTypeWater = new Option("w", "water", true, "Takes the counter value of type water (m^3).");
     private static Option   oTypeOil = new Option("o", "oil", true, "Takes the counter value of type oil (cm).");
     private static Option   oStats = new Option( "s", "statistics", false, "Prints a table with statistcs." );
-    private static Option   oPrintList = new Option("p", "printlist", true, "Prints the given list.");
+    private static Option   oPrintList = new Option("p", "printlist", true, "Prints the counter list for the given DataType.");
     
     private static CommandLineParser parser;
     private static CommandLine cmd;        
@@ -94,8 +95,17 @@ public class IncidentalExpenses {
             HelpFormatter formatter = new HelpFormatter();
             formatter.setWidth(1000);
             formatter.printHelp( "IncidentalExpenses", options );
+            
+            System.out.println();
+            System.out.println("Available DataTypes:");
+            for(int i=0; i<DataType.MAX_TYPES.getLocalIndex(); i++)
+                System.out.println( String.format(" - %-25s: %d", DataType.getItem(i).toString(), i));
             System.exit(-1);
         }
+        
+        /***********************************************************************
+         * Time format and time point related
+         **********************************************************************/
         
         if( cmd.hasOption( oTimeformat.getOpt() ))
         {
@@ -106,13 +116,26 @@ public class IncidentalExpenses {
         
         if( cmd.hasOption( oTimestamp.getOpt() ))
         {
+            // secode time from command line argunebt
             String      time;
             time=cmd.getOptionValue( oTimestamp.getOpt() );
             ticks = format.parse(time).getTime();
-            System.out.println(String.format("Text: %s\nTick: %d\n", time, ticks));
+            System.out.println(String.format("Text: %s\n", time));
+        }
+        else
+        {
+            // if option is not set, use current time
+            ticks = System.currentTimeMillis();
         }
 
-        if( cmd.hasOption( oTypeElectricity.getOpt() ) && cmd.hasOption( oTimestamp.getOpt() ) )
+//        System.out.println(String.format("Tick: %d", ticks));
+//        System.out.println(String.format("Date Time: %s", format.format( new Date(ticks))));
+
+        /***********************************************************************
+         * Insert new counter values 
+         **********************************************************************/
+        
+        if( cmd.hasOption( oTypeElectricity.getOpt() ) )
         {
             DataListCounters list;
             list = dbCounter.getConsList(DataType.ELECTRICITY);
@@ -123,7 +146,7 @@ public class IncidentalExpenses {
             list.printConsole();
         }
         
-        if( cmd.hasOption( oTypeWater.getOpt() ) && cmd.hasOption( oTimestamp.getOpt() ) )
+        if( cmd.hasOption( oTypeWater.getOpt() ) )
         {
             DataListCounters list;
             list = dbCounter.getConsList(DataType.WATER_ALL);
@@ -134,7 +157,7 @@ public class IncidentalExpenses {
             list.printConsole();
         }
         
-        if( cmd.hasOption( oTypeOil.getOpt() ) && cmd.hasOption( oTimestamp.getOpt() ) )
+        if( cmd.hasOption( oTypeOil.getOpt() ) )
         {
             DataListCounters list;
             list = dbCounter.getConsList(DataType.OIL_TANK);
@@ -150,10 +173,16 @@ public class IncidentalExpenses {
             dbCounter.saveToFile();
         }
 
+        /***********************************************************************
+         * Statistical post processing 
+         **********************************************************************/
+        
         if( cmd.hasOption( oPrintList.getOpt() ))
         {
             DataListCounters list;
-            list = dbCounter.getConsList(DataType.OIL_TANK);
+            int id = Integer.parseInt( cmd.getOptionValue( oPrintList.getOpt() ) );
+            DataType type = DataType.getItem(id);
+            list = dbCounter.getConsList( type );
             list.printConsole();
         }
         
