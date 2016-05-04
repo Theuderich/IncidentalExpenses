@@ -5,6 +5,7 @@
  */
 package main;
 
+import charts.ChartBasic;
 import consumption.DataListCounters;
 import consumption.DataModelCounter;
 import consumption.DataModelEnvironment;
@@ -25,11 +26,13 @@ import org.apache.commons.cli.Options;
 import postprocess.ppuModel;
 import postprocess.ppuNormDelta;
 
+
+import org.jfree.ui.RefineryUtilities;
 /**
  *
  * @author mabarthe
  */
-public class IncidentalExpenses {
+public class IncidentalExpenses   {
 
     private static Options  options = new Options();
     private static Option   oHelp = new Option( "h", "help", false, "print this message." );
@@ -41,6 +44,7 @@ public class IncidentalExpenses {
     private static Option   oTypeOil = new Option("o", "oil", true, "Takes the counter value of type oil (cm).");
     private static Option   oStats = new Option( "s", "statistics", false, "Prints a table with statistcs." );
     private static Option   oPrintList = new Option("p", "printlist", true, "Prints the counter list for the given DataType.");
+    private static Option   oChartConsumption = new Option("c", "chartconsumption", true, "JFreeChart printing the consumption.");
     
     private static CommandLineParser parser;
     private static CommandLine cmd;        
@@ -67,6 +71,8 @@ public class IncidentalExpenses {
         options.addOption(oTypeOil);
         options.addOption(oStats);
         options.addOption(oPrintList);
+        
+        options.addOption(oChartConsumption);
         
         parser = new DefaultParser();
         cmd = parser.parse( options, args);
@@ -186,6 +192,15 @@ public class IncidentalExpenses {
             list.printConsole();
         }
         
+        if( cmd.hasOption( oChartConsumption.getOpt() ))
+        {
+            int id = Integer.parseInt( cmd.getOptionValue( oChartConsumption.getOpt() ) );
+            DataType type = DataType.getItem(id);
+            ChartBasic demo = new ChartBasic( type );  
+            demo.run();
+        }
+        
+                
         if( cmd.hasOption( oStats.getOpt() ))
         {
             DataListCounters list;
@@ -261,5 +276,8 @@ public class IncidentalExpenses {
             System.out.println( );
 
         }
+        
+        
+        
     }
 }
