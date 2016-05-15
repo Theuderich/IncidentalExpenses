@@ -53,21 +53,39 @@ public class ChartBasic extends ApplicationFrame
         
         
         XYSeries series1 = new XYSeries("Series 1");
-        series1.add(10.0, 12353.3);
-        series1.add(20.0, 13734.4);
-        series1.add(30.0, 14525.3);
-        series1.add(40.0, 13984.3);
-        series1.add(50.0, 12999.4);
-        series1.add(60.0, 14274.3);
-        series1.add(70.0, 15943.5);
-        series1.add(80.0, 14845.3);
-        series1.add(90.0, 14645.4);
-        series1.add(100.0, 16234.6);
-        series1.add(110.0, 17232.3);
-        series1.add(120.0, 14232.2);
-        series1.add(130.0, 13102.2);
-        series1.add(140.0, 14230.2);
-        series1.add(150.0, 11235.2);        
+        
+        ListEntry old = null;
+        
+        Iterator<ListEntry> it = list.getIterator();
+        while(it.hasNext())
+        {
+            ListEntry cur = it.next();
+            if( old != null )
+            {
+                
+                series1.add(cur.getTimestamp().getTime(), (cur.getValue() - old.getValue())/((cur.getTimestamp().getTime() - old.getTimestamp().getTime())/(1000*60*60*24)) );
+                System.out.println(String.format("%d: %f, %d", cur.getTimestamp().getTime(), (cur.getValue() - old.getValue()) / ((cur.getTimestamp().getTime() - old.getTimestamp().getTime())/(1000*60*60*24)), (cur.getTimestamp().getTime() - old.getTimestamp().getTime()) ));
+            }
+            old = cur;
+            
+        }
+        
+//        series1.add(10.0, 12353.3);
+//        series1.add(20.0, 13734.4);
+//        series1.add(30.0, 14525.3);
+//        series1.add(40.0, 13984.3);
+//        series1.add(50.0, 12999.4);
+//        series1.add(60.0, 14274.3);
+//        series1.add(70.0, 15943.5);
+//        series1.add(80.0, 14845.3);
+//        series1.add(90.0, 14645.4);
+//        series1.add(100.0, 16234.6);
+//        series1.add(110.0, 17232.3);
+//        series1.add(120.0, 14232.2);
+//        series1.add(130.0, 13102.2);
+//        series1.add(140.0, 14230.2);
+//        series1.add(150.0, 11235.2);        
+        
 //        Iterator<ListEntry>     iterator = list.getIterator();
 //        while(iterator.hasNext())
 //        {
