@@ -5,6 +5,7 @@
  */
 package main;
 
+import charts.AnnualConsumptionProgress;
 import charts.ChartBasic;
 import consumption.DataListCounters;
 import consumption.DataModelCounter;
@@ -196,7 +197,7 @@ public class IncidentalExpenses   {
         {
             int id = Integer.parseInt( cmd.getOptionValue( oChartConsumption.getOpt() ) );
             DataType type = DataType.getItem(id);
-            ChartBasic demo = new ChartBasic( type );  
+            AnnualConsumptionProgress demo = new AnnualConsumptionProgress( type );  
             demo.run();
         }
         

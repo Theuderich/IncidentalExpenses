@@ -7,6 +7,7 @@ package main;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
@@ -36,5 +37,27 @@ public class MyDate extends Date {
     public String myFormat()
     {
         return format.format( this );
+    }
+    
+    public int getDayOfMonth()
+    {
+        Calendar c = Calendar.getInstance();
+        c.setTime( this );
+        return c.get( Calendar.DAY_OF_MONTH);
+    }
+    
+    public int getMonthOfYear()
+    {
+        Calendar c = Calendar.getInstance();
+        c.setTime( this );
+        return c.get( Calendar.MONTH) + 1;
+    }
+    
+    @Override
+    public int getYear()
+    {
+        Calendar c = Calendar.getInstance();
+        c.setTime( this );
+        return c.get( Calendar.YEAR );
     }
 }

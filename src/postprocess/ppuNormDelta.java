@@ -69,6 +69,12 @@ public class ppuNormDelta extends ppu {
         }
     }
     
+    public Iterator<NormDelta> getIterator()
+    {
+        return data.iterator();
+    }
+    
+    
 //    public double getAverageValue()
 //    {
 //        double  sum = 0;
@@ -105,26 +111,4 @@ public class ppuNormDelta extends ppu {
         System.out.println();
     }
     
-}
-
-class NormDelta
-{
-    public MyDate start;
-    public MyDate stop;
-    public double average;
-    
-    public double getTimeDiffMSec()
-    {
-        return stop.getTime() - start.getTime();
-    }
-
-    public double getTimeDiffSec()
-    {
-        return getTimeDiffMSec() / 1000;
-    }
-    
-    public double getTimeDiffDay()
-    {
-        return getTimeDiffSec() / 60 / 60 / 24;
-    }
 }
