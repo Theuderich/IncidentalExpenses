@@ -60,7 +60,23 @@
     <value>1069.134</value>
   </entry>
   <entry>
+    <timestamp>2016-10-26 22:00:00.0 UTC</timestamp>
+    <value>1127.0</value>
+  </entry>
+  <entry>
+    <timestamp>2016-10-27 22:00:00.0 UTC</timestamp>
+    <value>1.0</value>
+  </entry>
+  <entry>
+    <timestamp>2016-11-30 23:00:00.0 UTC</timestamp>
+    <value>7.0</value>
+  </entry>
+  <entry>
     <timestamp>2017-02-26 09:07:42.176 UTC</timestamp>
     <value>28.166</value>
+  </entry>
+  <entry>
+    <timestamp>2017-02-27 16:48:22.121 UTC</timestamp>
+    <value>28.61</value>
   </entry>
 </list>
